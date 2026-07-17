@@ -6,6 +6,7 @@ import type { CrawlOptions, PageResult } from "./types";
 interface QueueItem {
   url: string;
   depth: number;
+  parentUrl: string | null;
 }
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -34,7 +35,7 @@ export class Crawler extends EventEmitter {
     super();
     this.options = options;
     this.seedOrigin = new URL(options.seedUrl).origin;
-    this.queue.push({ url: options.seedUrl, depth: 0 });
+    this.queue.push({ url: options.seedUrl, depth: 0, parentUrl: null });
   }
 
   stop(): void {
@@ -100,6 +101,7 @@ export class Crawler extends EventEmitter {
     const start = Date.now();
     const base: PageResult = {
       url: item.url,
+      parentUrl: item.parentUrl,
       depth: item.depth,
       status: "success",
       statusCode: null,
@@ -161,7 +163,7 @@ export class Crawler extends EventEmitter {
       if (item.depth < this.options.maxDepth) {
         for (const link of links) {
           if (!this.visited.has(link)) {
-            this.queue.push({ url: link, depth: item.depth + 1 });
+            this.queue.push({ url: link, depth: item.depth + 1, parentUrl: item.url });
           }
         }
       }

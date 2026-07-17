@@ -22,3 +22,5 @@ export interface PageResult {
   fetchedAt: string;
   durationMs: number;
 }
+
+export type JobState = "idle" | "running" | "completed" | "stopped" | "failed";

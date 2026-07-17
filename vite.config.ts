@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
+// `npm run dev` (vercel dev) serves this app and /api together on one port.
+// This proxy only matters for the `dev:vite-only` + `dev:api` fallback pair,
+// for developers who haven't linked a Vercel account yet.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -14,10 +17,6 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:4000',
-      '/ws': {
-        target: 'ws://localhost:4000',
-        ws: true,
-      },
     },
   },
 })
