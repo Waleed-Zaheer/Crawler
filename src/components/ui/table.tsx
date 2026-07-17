@@ -3,18 +3,23 @@ import { cn } from "@/lib/utils";
 
 export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-border">
-      <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
+    <div className={cn("w-full overflow-auto rounded-lg border border-border", className)}>
+      <table className="w-full caption-bottom text-sm" {...props} />
     </div>
   );
 }
 
 export function TableHeader({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("bg-muted/50", className)} {...props} />;
+  return <thead className={cn("sticky top-0 z-10 bg-muted", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <tbody className={cn("divide-y divide-border", className)} {...props} />;
+  return (
+    <tbody
+      className={cn("divide-y divide-border [&_tr:nth-child(even)]:bg-muted/30", className)}
+      {...props}
+    />
+  );
 }
 
 export function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
