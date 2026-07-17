@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vercel dev",
     "dev:vite-only": "vite",
+    "dev:api": "tsx scripts/dev-api.ts",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -35,6 +36,7 @@
     "@vercel/node": "^5.1.14",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "tsx": "^4.19.2",
     "typescript": "~6.0.2",
     "vercel": "^41.4.1",
     "vite": "^8.1.1"
