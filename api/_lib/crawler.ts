@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import * as cheerio from "cheerio";
-import { getCrawlDelayMs, isAllowed, USER_AGENT } from "./robots.js";
-import type { CrawlOptions, PageResult } from "./types.js";
+import { getCrawlDelayMs, isAllowed, USER_AGENT } from "./robots";
+import type { CrawlOptions, PageResult } from "./types";
 
 interface QueueItem {
   url: string;

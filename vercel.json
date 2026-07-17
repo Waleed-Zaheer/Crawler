@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/crawl.ts": {
+      "maxDuration": 60
+    }
+  }
+}
