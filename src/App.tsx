@@ -96,7 +96,7 @@ function App() {
       <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[340px_1fr] lg:items-start">
         <div className="lg:sticky lg:top-20">
           <Card>
-            <CardHeader>
+            <CardHeader className="border-b">
               <CardTitle>New crawl</CardTitle>
               <CardDescription>
                 Up to {options.maxDepth} levels deep, {options.maxPages} pages.
@@ -211,7 +211,7 @@ function App() {
                   </span>
                 )}
                 {jobState !== "idle" && !isRunning && (
-                  <Badge variant={jobState === "completed" ? "success" : "muted"} className="mx-auto">
+                  <Badge variant={jobState === "completed" ? "success" : "secondary"} className="mx-auto">
                     {jobState}
                   </Badge>
                 )}
@@ -261,7 +261,7 @@ function App() {
           )}
 
           <Card>
-            <CardHeader>
+            <CardHeader className="border-b">
               <CardTitle>Results</CardTitle>
               <CardDescription>Every crawled page, as it's fetched.</CardDescription>
             </CardHeader>

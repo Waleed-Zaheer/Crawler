@@ -3,41 +3,38 @@ import { cn } from "@/lib/utils";
 
 export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className={cn("w-full overflow-auto rounded-lg border border-border", className)}>
+    <div className={cn("relative w-full overflow-auto", className)}>
       <table className="w-full caption-bottom text-sm" {...props} />
     </div>
   );
 }
 
 export function TableHeader({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("sticky top-0 z-10 bg-muted", className)} {...props} />;
+  return <thead className={cn("sticky top-0 z-10 bg-card [&_tr]:border-b", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+  return <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props} />;
+}
+
+export function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tbody
-      className={cn("divide-y divide-border [&_tr:nth-child(even)]:bg-muted/30", className)}
+    <tr
+      className={cn("border-b border-border transition-colors hover:bg-muted/50", className)}
       {...props}
     />
   );
 }
 
-export function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("transition-colors hover:bg-muted/40", className)} {...props} />;
-}
-
 export function TableHead({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={cn(
-        "h-10 whitespace-nowrap px-4 text-left align-middle text-xs font-medium uppercase tracking-wide text-muted-foreground",
-        className,
-      )}
+      className={cn("h-12 px-3 text-left align-middle font-medium whitespace-nowrap text-foreground", className)}
       {...props}
     />
   );
 }
 
 export function TableCell({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-4 py-2.5 align-middle", className)} {...props} />;
+  return <td className={cn("p-3 align-middle whitespace-nowrap", className)} {...props} />;
 }
