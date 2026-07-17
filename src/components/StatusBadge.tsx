@@ -4,11 +4,11 @@ import type { PageResult } from "@/types";
 
 const STATUS_CONFIG: Record<
   PageResult["status"],
-  { variant: "success" | "destructive" | "muted" | "default"; icon: typeof CheckCircle2; label: string }
+  { variant: "success" | "destructive" | "secondary" | "default"; icon: typeof CheckCircle2; label: string }
 > = {
   success: { variant: "success", icon: CheckCircle2, label: "success" },
   error: { variant: "destructive", icon: XCircle, label: "error" },
-  skipped: { variant: "muted", icon: CircleSlash, label: "skipped" },
+  skipped: { variant: "secondary", icon: CircleSlash, label: "skipped" },
   disallowed: { variant: "default", icon: ShieldAlert, label: "disallowed" },
 };
 

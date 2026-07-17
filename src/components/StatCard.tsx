@@ -11,7 +11,7 @@ interface StatCardProps {
 
 export function StatCard({ label, value, icon: Icon, accent }: StatCardProps) {
   return (
-    <Card className="flex items-center gap-3 p-4">
+    <Card className="flex-row items-center gap-3 p-4">
       <div
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",

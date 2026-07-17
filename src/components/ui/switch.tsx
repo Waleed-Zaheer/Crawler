@@ -20,7 +20,7 @@ export function Switch({ checked, onCheckedChange, disabled, id }: SwitchProps) 
         "relative h-5 w-9 shrink-0 rounded-full transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        checked ? "bg-primary" : "bg-input",
+        checked ? "bg-primary" : "bg-input/90",
       )}
     >
       <span
