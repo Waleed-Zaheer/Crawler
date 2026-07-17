@@ -1,4 +1,12 @@
-import robotsParser, { Robot } from "robots-parser";
+import robotsParserImport from "robots-parser";
+
+interface Robot {
+  isAllowed(url: string, ua?: string): boolean | undefined;
+  isDisallowed(url: string, ua?: string): boolean | undefined;
+  getCrawlDelay(ua?: string): number | undefined;
+}
+
+const robotsParser = robotsParserImport as unknown as (url: string, body: string) => Robot;
 
 const USER_AGENT = "MySnippetsCrawler/1.0 (+https://my-snippets-omega.vercel.app)";
 const cache = new Map<string, Promise<Robot | null>>();
