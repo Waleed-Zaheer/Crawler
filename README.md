@@ -1,38 +1,38 @@
 # Crawler
 
-A polite web crawler with a live dashboard, built to deploy on Vercel's free
-(Hobby) tier. Every crawled page — URL, status, title, links found, timing —
-streams into a results table the instant it's fetched, alongside a live 3D
-graph of the pages and links discovered.
+A polite web scraper with a dashboard, built to deploy on Vercel's free
+(Hobby) tier. It crawls from a seed URL and pulls real content off every page
+— images, videos, prices, phone numbers, emails — alongside per-page status,
+title, and outbound-link counts, presented in a tabbed data explorer and a 3D
+crawl graph.
 
 ## Stack
 
-- **Crawl engine** (`api/_lib`) — TypeScript, `cheerio` for HTML parsing,
-  `robots-parser` for robots.txt/Crawl-delay compliance.
-- **API** (`api/crawl.ts`) — a single Vercel serverless function that runs the
-  crawl and streams results back over Server-Sent Events (SSE). Vercel
-  doesn't support long-lived processes or raw WebSocket servers, so the whole
-  crawl happens inside one function invocation, bounded by `vercel.json`'s
+- **Crawl engine** (`api/_lib`) — TypeScript, `cheerio` for HTML parsing and
+  content extraction, `robots-parser` for robots.txt/Crawl-delay compliance.
+- **API** (`api/crawl.ts`) — a single Vercel serverless function. It runs the
+  entire (bounded) crawl inside one invocation and returns every result as one
+  JSON response. Serverless functions are request→response — holding a
+  streaming/SSE connection open gets buffered or killed by the platform — so a
+  single response is the reliable design. Bounded by `vercel.json`'s
   `maxDuration`.
 - **Frontend** — React, TypeScript, Vite, Tailwind CSS v4.2, Zustand for
-  client state, Framer Motion for the results table's row animations, and
-  Three.js (via `@react-three/fiber`/`drei`) for the live crawl graph. UI
-  primitives are hand-built with Tailwind — no component library — themed
-  with the color tokens from
-  [my-snippets](https://my-snippets-omega.vercel.app).
+  client state, Framer Motion for row animations, and Three.js (via
+  `@react-three/fiber`/`drei`) for the crawl graph. UI primitives are
+  hand-built with Tailwind — no component library — matching the components and
+  theme of [my-snippets](https://my-snippets-omega.vercel.app).
 
 ## How it works
 
 1. You submit a seed URL and crawl settings (max depth, max pages,
    concurrency, same-origin only, respect robots.txt) from the UI.
-2. The browser opens an `EventSource` to `/api/crawl` with those settings as
-   query params. The function runs a breadth-first crawl, checking
-   `robots.txt` and honoring `Crawl-delay` before each request, and
-   extracting the page title and outbound links with `cheerio`.
-3. Each crawled page is emitted as an SSE `page` event the instant it's
-   fetched — no polling. The frontend appends it to the results table and to
-   the 3D graph as it arrives. Closing the connection (the Stop button) tells
-   the function to stop crawling.
+2. The browser `POST`s those settings as JSON to `/api/crawl`. The function
+   runs a breadth-first crawl, checking `robots.txt` and honoring
+   `Crawl-delay` before each request, then extracts the title, outbound links,
+   images, videos, prices, phones, and emails from each page with `cheerio`.
+3. When the crawl finishes (or hits its safety cutoff), the function returns
+   all results at once. The dashboard renders them into a tabbed explorer
+   (Pages · Images · Prices · Phones · Emails · Videos · Graph).
 
 Because the whole crawl runs inside one serverless function call, depth,
 page count, and concurrency are capped server-side (defaults: depth ≤ 3,
@@ -44,12 +44,12 @@ function duration limit.
 ```
 crawler/
 ├── api/
-│   ├── crawl.ts        # Vercel function: SSE crawl endpoint
-│   └── _lib/            # crawl engine (crawler, robots.txt, types)
+│   ├── crawl.ts        # Vercel function: runs the crawl, returns JSON
+│   └── _lib/            # crawl engine (crawler, extractor, robots.txt, types)
 ├── src/                 # Vite + React dashboard
 │   ├── components/ui/   # hand-built Tailwind primitives
-│   ├── components/CrawlGraph.tsx  # three.js live crawl graph
-│   └── store/crawlStore.ts        # zustand store wired to the SSE stream
+│   ├── components/CrawlGraph.tsx  # three.js crawl graph
+│   └── store/crawlStore.ts        # zustand store (fetch → /api/crawl)
 ├── scripts/dev-api.ts   # local stand-in for the Vercel function (no CLI login needed)
 └── vercel.json           # function duration config
 ```
