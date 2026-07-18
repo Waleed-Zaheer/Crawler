@@ -56,23 +56,21 @@ crawler/
 
 ## Running locally
 
-Option A — matches production exactly, via the Vercel CLI (requires
-`vercel login` once):
+One command runs both the Vite dev server and the local `/api/crawl`
+stand-in together (no Vercel account needed):
 
 ```bash
 npm install
-npm run dev   # vercel dev — serves the frontend and /api together
+npm run dev
 ```
 
-Option B — no Vercel account needed, two terminals:
+- `web` → Vite dev server on `:5173` (proxies `/api` to `:4000`)
+- `api` → local stand-in for the crawl function on `:4000`
 
-```bash
-npm install
-npm run dev:api        # terminal 1 — stand-in for /api/crawl on :4000
-npm run dev:vite-only  # terminal 2 — Vite dev server on :5173, proxies /api to :4000
-```
+Open `http://localhost:5173`, enter a seed URL, and start a crawl.
 
-Open the app, enter a seed URL, and start a crawl.
+To emulate the real Vercel runtime in one process instead (requires
+`vercel login` once): `npm run dev:vercel`.
 
 ## Deploying
 

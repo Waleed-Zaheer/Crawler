@@ -62,10 +62,12 @@ export function extractPageData($: CheerioAPI, pageUrl: string): ExtractedData {
   });
 
   // Scan visible text only — strip script/style/noscript so we don't match
-  // prices/phones/emails buried in JS or CSS.
-  const $text = $.root().clone();
-  $text.find("script, style, noscript").remove();
-  const text = $text.text();
+  // prices/phones/emails buried in JS or CSS. We remove them from the live
+  // tree rather than cloning it (cloning doubles the DOM in memory, which can
+  // OOM the serverless function); the caller only reads <a href> links after
+  // this, and those never live inside script/style/noscript.
+  $("script, style, noscript").remove();
+  const text = $.root().text();
 
   return {
     images,

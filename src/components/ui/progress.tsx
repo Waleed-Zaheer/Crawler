@@ -1,16 +1,26 @@
 import { cn } from "@/lib/utils";
 
 interface ProgressProps {
-  value: number;
+  value?: number;
   max?: number;
+  indeterminate?: boolean;
   className?: string;
 }
 
-export function Progress({ value, max = 100, className }: ProgressProps) {
+export function Progress({ value = 0, max = 100, indeterminate, className }: ProgressProps) {
   const pct = Math.min(100, Math.max(0, (value / max) * 100));
   return (
-    <div className={cn("relative flex h-3 w-full items-center overflow-x-hidden rounded-full bg-muted", className)}>
-      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+    <div
+      className={cn(
+        "relative flex h-3 w-full items-center overflow-hidden rounded-full bg-muted",
+        className,
+      )}
+    >
+      {indeterminate ? (
+        <div className="absolute h-full w-2/5 animate-[progress-slide_1.2s_ease-in-out_infinite] rounded-full bg-primary" />
+      ) : (
+        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+      )}
     </div>
   );
 }
