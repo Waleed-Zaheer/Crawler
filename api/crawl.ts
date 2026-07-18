@@ -62,7 +62,7 @@ async function runCrawl(req: VercelRequest, res: VercelResponse): Promise<void> 
     seedUrl,
     maxDepth: clamp(input.maxDepth, 1, 3, 2),
     maxPages: clamp(input.maxPages, 1, 25, 12),
-    concurrency: clamp(input.concurrency, 1, 4, 3),
+    concurrency: clamp(input.concurrency, 1, 8, 6),
     sameOriginOnly: parseBool(input.sameOriginOnly, true),
     respectRobots: parseBool(input.respectRobots, true),
   };

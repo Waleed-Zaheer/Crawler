@@ -154,7 +154,7 @@ export function Dashboard({ onHome }: { onHome: () => void }) {
                       value={options.concurrency}
                       onChange={(e) => setOption("concurrency", Number(e.target.value))}
                     >
-                      {[1, 2, 3, 4].map((n) => (
+                      {[1, 2, 3, 4, 6, 8].map((n) => (
                         <option key={n} value={n}>
                           {n}
                         </option>

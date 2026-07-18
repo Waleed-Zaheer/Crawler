@@ -19,8 +19,9 @@ const FETCH_TIMEOUT_MS = 8_000;
 const MAX_HTML_BYTES = 2_000_000;
 // Honor robots' Crawl-delay, but cap it — a site asking for a 10s delay would
 // otherwise push us past the serverless function's hard time limit and get the
-// whole invocation killed (a 502 to the client).
-const MAX_CRAWL_DELAY_MS = 1_000;
+// whole invocation killed (a 502 to the client). Kept short so crawls stay
+// snappy; most sites don't set a Crawl-delay at all.
+const MAX_CRAWL_DELAY_MS = 500;
 
 function normalizeUrl(raw: string, base: string): string | null {
   try {

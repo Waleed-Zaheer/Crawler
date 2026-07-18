@@ -25,7 +25,7 @@ const defaultOptions: CrawlOptions = {
   seedUrl: "https://example.com",
   maxDepth: 2,
   maxPages: 12,
-  concurrency: 3,
+  concurrency: 6,
   sameOriginOnly: true,
   respectRobots: true,
 };
