@@ -1,7 +1,10 @@
 import { EventEmitter } from "node:events";
 import * as cheerio from "cheerio";
+import { extractPageData } from "./extract";
 import { getCrawlDelayMs, isAllowed, USER_AGENT } from "./robots";
 import type { CrawlOptions, PageResult } from "./types";
+
+const EMPTY_DATA = { images: [], videos: [], prices: [], phones: [], emails: [] };
 
 interface QueueItem {
   url: string;
@@ -108,6 +111,7 @@ export class Crawler extends EventEmitter {
       title: null,
       contentType: null,
       linksFound: 0,
+      data: EMPTY_DATA,
       error: null,
       fetchedAt: new Date().toISOString(),
       durationMs: 0,
@@ -149,6 +153,7 @@ export class Crawler extends EventEmitter {
       const html = await res.text();
       const $ = cheerio.load(html);
       const title = $("title").first().text().trim() || null;
+      const data = extractPageData($, item.url);
 
       const links = new Set<string>();
       $("a[href]").each((_, el) => {
@@ -172,6 +177,7 @@ export class Crawler extends EventEmitter {
         ...base,
         title,
         linksFound: links.size,
+        data,
         durationMs: Date.now() - start,
       });
     } catch (err) {
