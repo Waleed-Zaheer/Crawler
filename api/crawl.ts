@@ -18,7 +18,15 @@ function parseBool(value: unknown, fallback: boolean): boolean {
   return value === true || value === "true" || value === "1";
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+function safeParse(body: string): Record<string, unknown> {
+  try {
+    return JSON.parse(body);
+  } catch {
+    return {};
+  }
+}
+
+async function runCrawl(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== "POST" && req.method !== "GET") {
     res.status(405).json({ error: "Use POST (or GET) to start a crawl." });
     return;
@@ -29,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     req.method === "POST"
       ? typeof req.body === "string"
         ? safeParse(req.body)
-        : (req.body ?? {})
+        : ((req.body as Record<string, unknown> | undefined) ?? {})
       : req.query;
 
   const seedUrl = input.seedUrl;
@@ -59,29 +67,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const results: PageResult[] = [];
   const crawler = new Crawler(options);
   crawler.on("page", (data: PageResult) => results.push(data));
+  // EventEmitter throws if an "error" event is emitted with no listener, which
+  // would crash the whole function. Absorb any into the response instead.
+  let crawlError: string | null = null;
+  crawler.on("error", (err: unknown) => {
+    crawlError = err instanceof Error ? err.message : String(err);
+  });
 
   // Stop with a safety margin so we return the pages gathered so far instead
   // of being hard-killed when maxDuration is hit.
   const safetyTimer = setTimeout(() => crawler.stop(), 50_000);
 
   let state: JobState = "completed";
-  let error: string | null = null;
   try {
     await crawler.run();
   } catch (err) {
     state = "failed";
-    error = err instanceof Error ? err.message : "unknown error";
+    crawlError = err instanceof Error ? err.message : "unknown error";
   } finally {
     clearTimeout(safetyTimer);
   }
 
-  res.status(200).json({ state, error, results, visitedCount: results.length });
+  res.status(200).json({ state, error: crawlError, results, visitedCount: results.length });
 }
 
-function safeParse(body: string): Record<string, unknown> {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    return JSON.parse(body);
-  } catch {
-    return {};
+    await runCrawl(req, res);
+  } catch (err) {
+    // Last-resort guard: surface the real reason instead of an opaque 500 so
+    // failures are diagnosable from the browser's network tab.
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: err instanceof Error ? `${err.name}: ${err.message}` : "Unexpected server error",
+      });
+    }
   }
 }

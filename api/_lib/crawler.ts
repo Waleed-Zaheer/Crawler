@@ -13,6 +13,10 @@ interface QueueItem {
 }
 
 const FETCH_TIMEOUT_MS = 10_000;
+// cheerio's DOM can be ~10x the raw HTML size; parsing very large pages
+// concurrently can exhaust a serverless function's memory and crash it (a 500
+// to the client). Skip anything above this cap rather than risk the whole run.
+const MAX_HTML_BYTES = 3_000_000;
 
 function normalizeUrl(raw: string, base: string): string | null {
   try {
@@ -150,7 +154,27 @@ export class Crawler extends EventEmitter {
         return;
       }
 
+      const declaredSize = Number(res.headers.get("content-length"));
+      if (Number.isFinite(declaredSize) && declaredSize > MAX_HTML_BYTES) {
+        this.emit("page", {
+          ...base,
+          status: "skipped",
+          error: "page too large",
+          durationMs: Date.now() - start,
+        });
+        return;
+      }
+
       const html = await res.text();
+      if (html.length > MAX_HTML_BYTES) {
+        this.emit("page", {
+          ...base,
+          status: "skipped",
+          error: "page too large",
+          durationMs: Date.now() - start,
+        });
+        return;
+      }
       const $ = cheerio.load(html);
       const title = $("title").first().text().trim() || null;
       const data = extractPageData($, item.url);
