@@ -12,11 +12,15 @@ interface QueueItem {
   parentUrl: string | null;
 }
 
-const FETCH_TIMEOUT_MS = 10_000;
+const FETCH_TIMEOUT_MS = 8_000;
 // cheerio's DOM can be ~10x the raw HTML size; parsing very large pages
-// concurrently can exhaust a serverless function's memory and crash it (a 500
+// concurrently can exhaust a serverless function's memory and crash it (a 5xx
 // to the client). Skip anything above this cap rather than risk the whole run.
-const MAX_HTML_BYTES = 3_000_000;
+const MAX_HTML_BYTES = 2_000_000;
+// Honor robots' Crawl-delay, but cap it — a site asking for a 10s delay would
+// otherwise push us past the serverless function's hard time limit and get the
+// whole invocation killed (a 502 to the client).
+const MAX_CRAWL_DELAY_MS = 1_000;
 
 function normalizeUrl(raw: string, base: string): string | null {
   try {
@@ -127,7 +131,7 @@ export class Crawler extends EventEmitter {
         this.emit("page", { ...base, status: "disallowed", durationMs: Date.now() - start });
         return;
       }
-      const delay = await getCrawlDelayMs(item.url).catch(() => 0);
+      const delay = Math.min(await getCrawlDelayMs(item.url).catch(() => 0), MAX_CRAWL_DELAY_MS);
       if (delay > 0) await new Promise((r) => setTimeout(r, delay));
     }
 

@@ -55,11 +55,14 @@ async function runCrawl(req: VercelRequest, res: VercelResponse): Promise<void> 
     return;
   }
 
+  // Bounds kept conservative so a run comfortably fits inside the function's
+  // memory and time budget on Vercel's free tier (large/slow sites are what
+  // pushed earlier runs into platform-level 5xx crashes).
   const options: CrawlOptions = {
     seedUrl,
     maxDepth: clamp(input.maxDepth, 1, 3, 2),
-    maxPages: clamp(input.maxPages, 1, 30, 15),
-    concurrency: clamp(input.concurrency, 1, 5, 3),
+    maxPages: clamp(input.maxPages, 1, 25, 12),
+    concurrency: clamp(input.concurrency, 1, 4, 3),
     sameOriginOnly: parseBool(input.sameOriginOnly, true),
     respectRobots: parseBool(input.respectRobots, true),
   };
@@ -74,9 +77,10 @@ async function runCrawl(req: VercelRequest, res: VercelResponse): Promise<void> 
     crawlError = err instanceof Error ? err.message : String(err);
   });
 
-  // Stop with a safety margin so we return the pages gathered so far instead
-  // of being hard-killed when maxDuration is hit.
-  const safetyTimer = setTimeout(() => crawler.stop(), 50_000);
+  // Stop early enough that in-flight fetches (≤8s) can finish and we still
+  // respond well before maxDuration — being hard-killed mid-response is what
+  // produced the 502s. 45s stop + ~8s drain ≈ 53s, under the 60s limit.
+  const safetyTimer = setTimeout(() => crawler.stop(), 45_000);
 
   let state: JobState = "completed";
   try {

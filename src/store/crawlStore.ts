@@ -24,7 +24,7 @@ let controller: AbortController | null = null;
 const defaultOptions: CrawlOptions = {
   seedUrl: "https://example.com",
   maxDepth: 2,
-  maxPages: 15,
+  maxPages: 12,
   concurrency: 3,
   sameOriginOnly: true,
   respectRobots: true,

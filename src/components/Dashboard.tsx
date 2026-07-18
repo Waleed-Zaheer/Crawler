@@ -138,7 +138,7 @@ export function Dashboard({ onHome }: { onHome: () => void }) {
                       value={options.maxPages}
                       onChange={(e) => setOption("maxPages", Number(e.target.value))}
                     >
-                      {[5, 10, 15, 20, 30].map((n) => (
+                      {[5, 10, 15, 20, 25].map((n) => (
                         <option key={n} value={n}>
                           {n}
                         </option>
@@ -154,7 +154,7 @@ export function Dashboard({ onHome }: { onHome: () => void }) {
                       value={options.concurrency}
                       onChange={(e) => setOption("concurrency", Number(e.target.value))}
                     >
-                      {[1, 2, 3, 4, 5].map((n) => (
+                      {[1, 2, 3, 4].map((n) => (
                         <option key={n} value={n}>
                           {n}
                         </option>
