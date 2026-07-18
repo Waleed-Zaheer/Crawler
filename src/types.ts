@@ -9,6 +9,19 @@ export interface CrawlOptions {
 
 export type PageStatus = "success" | "error" | "skipped" | "disallowed";
 
+export interface PageImage {
+  src: string;
+  alt: string | null;
+}
+
+export interface PageData {
+  images: PageImage[];
+  videos: string[];
+  prices: string[];
+  phones: string[];
+  emails: string[];
+}
+
 export interface PageResult {
   url: string;
   parentUrl: string | null;
@@ -18,6 +31,7 @@ export interface PageResult {
   title: string | null;
   contentType: string | null;
   linksFound: number;
+  data: PageData;
   error: string | null;
   fetchedAt: string;
   durationMs: number;
