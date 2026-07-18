@@ -1,19 +1,25 @@
 import { create } from "zustand";
 import type { CrawlOptions, JobState, PageResult } from "@/types";
 
+interface CrawlResponse {
+  state: JobState;
+  error: string | null;
+  results: PageResult[];
+  visitedCount: number;
+}
+
 interface CrawlState {
   options: CrawlOptions;
   results: PageResult[];
   jobState: JobState;
   visitedCount: number;
-  queuedCount: number;
   error: string | null;
   setOption: <K extends keyof CrawlOptions>(key: K, value: CrawlOptions[K]) => void;
-  startCrawl: () => void;
+  startCrawl: () => Promise<void>;
   stopCrawl: () => void;
 }
 
-let activeSource: EventSource | null = null;
+let controller: AbortController | null = null;
 
 const defaultOptions: CrawlOptions = {
   seedUrl: "https://example.com",
@@ -29,66 +35,56 @@ export const useCrawlStore = create<CrawlState>((set, get) => ({
   results: [],
   jobState: "idle",
   visitedCount: 0,
-  queuedCount: 0,
   error: null,
 
   setOption: (key, value) =>
     set((state) => ({ options: { ...state.options, [key]: value } })),
 
-  startCrawl: () => {
-    if (activeSource) activeSource.close();
+  startCrawl: async () => {
+    if (controller) controller.abort();
+    controller = new AbortController();
 
     const { options } = get();
-    const params = new URLSearchParams({
-      seedUrl: options.seedUrl,
-      maxDepth: String(options.maxDepth),
-      maxPages: String(options.maxPages),
-      concurrency: String(options.concurrency),
-      sameOriginOnly: String(options.sameOriginOnly),
-      respectRobots: String(options.respectRobots),
-    });
+    set({ results: [], jobState: "running", visitedCount: 0, error: null });
 
-    set({ results: [], jobState: "running", visitedCount: 0, queuedCount: 0, error: null });
+    try {
+      const res = await fetch("/api/crawl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(options),
+        signal: controller.signal,
+      });
 
-    const source = new EventSource(`/api/crawl?${params.toString()}`);
-    activeSource = source;
-
-    source.addEventListener("page", (event) => {
-      const data = JSON.parse((event as MessageEvent).data) as PageResult;
-      set((state) => ({ results: [...state.results, data] }));
-    });
-
-    source.addEventListener("progress", (event) => {
-      const data = JSON.parse((event as MessageEvent).data) as {
-        visitedCount: number;
-        queuedCount: number;
-      };
-      set({ visitedCount: data.visitedCount, queuedCount: data.queuedCount });
-    });
-
-    source.addEventListener("done", (event) => {
-      const data = JSON.parse((event as MessageEvent).data) as {
-        state: JobState;
-        error?: string;
-      };
-      set({ jobState: data.state, error: data.error ?? null });
-      source.close();
-      activeSource = null;
-    });
-
-    source.onerror = () => {
-      if (get().jobState === "running") {
-        set({ jobState: "failed", error: "Connection to the crawler was lost." });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `Crawl failed (HTTP ${res.status})`);
       }
-      source.close();
-      activeSource = null;
-    };
+
+      const data = (await res.json()) as CrawlResponse;
+      set({
+        results: data.results,
+        visitedCount: data.visitedCount,
+        jobState: data.state,
+        error: data.error,
+      });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        // stopCrawl() already set the stopped state.
+        return;
+      }
+      set({
+        jobState: "failed",
+        error: err instanceof Error ? err.message : "Crawl request failed.",
+      });
+    } finally {
+      controller = null;
+    }
   },
 
   stopCrawl: () => {
-    if (activeSource) {
-      activeSource.close();
-      activeSource = null;
+    if (controller) {
+      controller.abort();
+      controller = null;
     }
     set({ jobState: "stopped" });
   },

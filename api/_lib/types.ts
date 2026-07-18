@@ -9,6 +9,8 @@ export interface CrawlOptions {
 
 export type PageStatus = "success" | "error" | "skipped" | "disallowed";
 
+export type JobState = "idle" | "running" | "completed" | "stopped" | "failed";
+
 export interface PageImage {
   src: string;
   alt: string | null;
