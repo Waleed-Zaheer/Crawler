@@ -105,3 +105,12 @@
     @apply font-sans;
   }
 }
+
+@keyframes progress-slide {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
+}
