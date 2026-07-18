@@ -11,6 +11,7 @@ import {
   Square,
 } from "lucide-react";
 import { DataViews } from "@/components/AssetTabs";
+import { ScanningState } from "@/components/ScanningState";
 import { StatCard } from "@/components/StatCard";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +43,9 @@ export function Dashboard({ onHome }: { onHome: () => void }) {
     useCrawlStore();
 
   const isRunning = jobState === "running";
-  const showStats = results.length > 0 || isRunning;
+  const hasResults = results.length > 0;
+  const showStats = hasResults;
+  const scanning = isRunning && !hasResults;
 
   const totals = useMemo(() => {
     const data = aggregate(results);
@@ -241,8 +244,9 @@ export function Dashboard({ onHome }: { onHome: () => void }) {
                 Pages, images, prices, contacts, and videos found across the crawl.
               </CardDescription>
             </CardHeader>
+            {scanning && <Progress indeterminate className="rounded-none" />}
             <CardContent>
-              <DataViews results={results} />
+              {scanning ? <ScanningState seedUrl={options.seedUrl} /> : <DataViews results={results} />}
             </CardContent>
           </Card>
         </div>

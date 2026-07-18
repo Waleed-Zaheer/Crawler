@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "dev:vite-only": "vite",
+    "dev": "vite",
     "dev:api": "tsx scripts/dev-api.ts",
+    "dev:vercel": "vercel dev",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
