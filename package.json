@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k -n api,web -c yellow,cyan \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:web": "vite",
     "dev:api": "tsx scripts/dev-api.ts",
     "dev:vercel": "vercel dev",
     "build": "tsc -b && vite build",
@@ -36,6 +37,7 @@
     "@types/three": "^0.171.0",
     "@vercel/node": "^5.1.14",
     "@vitejs/plugin-react": "^6.0.3",
+    "concurrently": "^10.0.3",
     "oxlint": "^1.71.0",
     "tsx": "^4.19.2",
     "typescript": "~6.0.2",
