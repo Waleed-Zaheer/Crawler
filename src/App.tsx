@@ -1,8 +1,18 @@
-import { lazy, Suspense, useEffect, useState, type FormEvent } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, Clock3, Globe, Loader2, Moon, Play, Square, Sun, Target } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  AtSign,
+  CheckCircle2,
+  DollarSign,
+  Globe,
+  Image as ImageIcon,
+  Loader2,
+  Moon,
+  Play,
+  Square,
+  Sun,
+} from "lucide-react";
+import { DataViews } from "@/components/AssetTabs";
 import { StatCard } from "@/components/StatCard";
-import { StatusBadge } from "@/components/StatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,11 +21,9 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { aggregate } from "@/lib/aggregate";
 import { applyTheme, getInitialTheme, type Theme } from "@/lib/theme";
 import { useCrawlStore } from "@/store/crawlStore";
-
-const CrawlGraph = lazy(() => import("@/components/CrawlGraph").then((m) => ({ default: m.CrawlGraph })));
 
 function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
@@ -61,12 +69,20 @@ function App() {
     results,
     jobState,
     visitedCount,
-    queuedCount,
     error,
   } = useCrawlStore();
 
   const isRunning = jobState === "running";
   const showStats = results.length > 0 || isRunning;
+
+  const totals = useMemo(() => {
+    const data = aggregate(results);
+    return {
+      images: data.images.length,
+      prices: data.prices.length,
+      contacts: data.phones.length + data.emails.length,
+    };
+  }, [results]);
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -224,10 +240,11 @@ function App() {
         <div className="flex min-w-0 flex-col gap-6">
           {showStats && (
             <>
-              <div className="grid grid-cols-3 gap-4">
-                <StatCard label="Visited" value={visitedCount} icon={CheckCircle2} accent />
-                <StatCard label="Queued" value={queuedCount} icon={Clock3} />
-                <StatCard label="Target" value={options.maxPages} icon={Target} />
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <StatCard label="Pages" value={visitedCount} icon={CheckCircle2} accent />
+                <StatCard label="Images" value={totals.images} icon={ImageIcon} />
+                <StatCard label="Prices" value={totals.prices} icon={DollarSign} />
+                <StatCard label="Contacts" value={totals.contacts} icon={AtSign} />
               </div>
               <Card>
                 <CardContent className="flex items-center gap-4">
@@ -240,83 +257,13 @@ function App() {
             </>
           )}
 
-          {showStats && (
-            <Card className="overflow-hidden">
-              <CardHeader>
-                <CardTitle>Crawl graph</CardTitle>
-                <CardDescription>Each node is a page; edges follow the link that found it.</CardDescription>
-              </CardHeader>
-              <CardContent className="h-100 p-0">
-                <Suspense
-                  fallback={
-                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                      Loading 3D view…
-                    </div>
-                  }
-                >
-                  <CrawlGraph results={results} />
-                </Suspense>
-              </CardContent>
-            </Card>
-          )}
-
           <Card>
             <CardHeader className="border-b">
-              <CardTitle>Results</CardTitle>
-              <CardDescription>Every crawled page, as it's fetched.</CardDescription>
+              <CardTitle>Scraped data</CardTitle>
+              <CardDescription>Pages, images, prices, contacts, and videos found across the crawl.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table className="max-h-130">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">#</TableHead>
-                    <TableHead>URL</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead className="text-right">Depth</TableHead>
-                    <TableHead className="text-right">Links</TableHead>
-                    <TableHead className="text-right">Time</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <AnimatePresence initial={false}>
-                    {results.map((page, i) => (
-                      <motion.tr
-                        key={page.url}
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="border-b border-border transition-colors last:border-0 hover:bg-muted/50"
-                      >
-                        <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                        <TableCell className="max-w-xs truncate font-mono text-xs" title={page.url}>
-                          {page.url}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={page.status} />
-                        </TableCell>
-                        <TableCell className="tabular-nums">{page.statusCode ?? "—"}</TableCell>
-                        <TableCell className="max-w-xs truncate text-muted-foreground">
-                          {page.title ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">{page.depth}</TableCell>
-                        <TableCell className="text-right tabular-nums">{page.linksFound}</TableCell>
-                        <TableCell className="text-right tabular-nums text-muted-foreground">
-                          {page.durationMs}ms
-                        </TableCell>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
-                  {results.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
-                        No results yet — start a crawl on the left.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <DataViews results={results} />
             </CardContent>
           </Card>
         </div>
