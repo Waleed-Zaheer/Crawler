@@ -39,9 +39,64 @@ page count, and concurrency are capped server-side (defaults: depth ≤ 3,
 pages ≤ 30, concurrency ≤ 5) to comfortably fit inside Vercel Hobby's
 function duration limit.
 
+## Architecture
+
+### The constraint that shapes everything: one request, one response
+
+Serverless functions are request→response. Holding a connection open to stream progress
+(SSE/WebSocket) gets buffered or killed by the platform, so the crawl **cannot** report as it
+goes — it has to complete inside a single invocation and return everything at once.
+
+That single fact drives the rest of the design:
+
+```text
+Browser                          Vercel Function (api/crawl.ts)
+───────                          ─────────────────────────────
+POST /api/crawl  ──────────────▶ 1. validate + clamp settings
+ { seed, depth,                  2. fetch + cache robots.txt
+   maxPages, concurrency,        3. BFS queue, N workers in parallel
+   sameOrigin, respectRobots }      ├─ honour Crawl-delay
+                                    ├─ cheerio: title, links, images,
+                                    │  videos, prices, phones, emails
+                                    └─ until depth/page cap or time budget
+        ◀────────────────────────  4. one JSON response, all results
+ zustand store → tabbed explorer + three.js graph
+```
+
+**Everything is bounded server-side** (depth ≤ 3, pages ≤ 30, concurrency ≤ 5 by default)
+so a crawl always finishes inside `vercel.json`'s `maxDuration`. Client-supplied values are
+clamped rather than trusted — otherwise a user could request depth 50 and get a timeout
+instead of results.
+
+### Politeness is a first-class concern
+
+`robots-parser` checks `robots.txt` before every request and honours `Crawl-delay`. This is
+what separates a crawler from a nuisance, and it's enforced in the engine
+(`api/_lib`) rather than left to the caller.
+
+### Two runtimes, one engine
+
+The crawl engine in `api/_lib` is plain TypeScript with no platform coupling. It's driven by
+two thin entry points:
+
+| Entry point | Used for |
+| --- | --- |
+| `api/crawl.ts` | The real Vercel serverless function in production |
+| `scripts/dev-api.ts` | A local stand-in on `:4000`, so `npm run dev` needs no Vercel login |
+
+Keeping the engine free of Vercel-specific APIs is what makes that local stand-in possible —
+worth preserving if the engine grows.
+
+### Frontend
+
+React + Vite, with `zustand` holding crawl state and results. UI primitives are hand-built
+with Tailwind — deliberately no component library — matching the components and theme of
+[my-snippets](https://my-snippets-omega.vercel.app). The crawl graph renders with
+`@react-three/fiber`/`drei`.
+
 ## Project layout
 
-```
+```text
 crawler/
 ├── api/
 │   ├── crawl.ts        # Vercel function: runs the crawl, returns JSON
