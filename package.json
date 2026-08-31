@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n api,web -c yellow,cyan \"npm:dev:api\" \"npm:dev:web\"",
+    "dev": "node init && concurrently -k -n api,web -c yellow,cyan \"npm:dev:api\" \"npm:dev:web\"",
     "dev:web": "vite",
     "dev:api": "tsx scripts/dev-api.ts",
     "dev:vercel": "vercel dev",
-    "build": "tsc -b && vite build",
+    "build": "node init && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
